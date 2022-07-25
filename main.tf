@@ -1,104 +1,181 @@
-#use provider in the main file
-# we want to use aws provider and pass theese credentials
 provider "aws" {
-  region     = "eu-central-1"
-  access_key = "AKIA5HSVA5XYTZHNE2DP"
-  secret_key = "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"
+  region = "eu-west-3"
 }
-#we do not have providers code here so we need to install them 
-#by trafform init command
-#also we have defune which version of provider we use 
 
-# #we need to explicityly define where we can find the code for this
-# provider "linode" {
-#   # token = "..."
-# }
-variable "vpc_cidr_block" {
-  description = "vpc cidr block"
+variable "vpc_cidr_block" {}
+variable "subnet_cidr_block" {}
+variable "avail_zone" {}
+variable "env_prefix" {}
+variable "my_ip" {}
+variable "instance_type" {}
+variable "public_key" {}
+variable "public_key_location" {
 
 }
-variable "environment" {
-  description = "deplotyment environment"
-}
-#create resource
-resource "aws_vpc" "development-vpc" {
+resource "aws_vpc" "myApp-vpc" {
   cidr_block = var.vpc_cidr_block
   tags = {
-    "Name"    = var.environment
-    "vpc_env" = "dev"
+    "Name" = "${var.env_prefix}-vpc"
   }
-
 }
 
-# resource "aws_subnet" "dev-subnet-1" {
-#   #must assign to vpc 
-#   vpc_id            = aws_vpc.development-vpc.id #refered to resource created before
-#   cidr_block        = "10.0.10.0/24"
-#   availability_zone = "eu-central-1a"
+resource "aws_subnet" "myApp-subnet-1" {
+  #must assign to vpc 
+  vpc_id            = aws_vpc.myApp-vpc.id #refered to resource created before
+  cidr_block        = var.subnet_cidr_block
+  availability_zone = var.avail_zone
+  tags = {
+    "Name" = "${var.env_prefix}-subnet1"
+  }
+}
+
+
+resource "aws_internet_gateway" "myapp-ig" {
+  vpc_id = aws_vpc.myApp-vpc.id
+  tags = {
+    "Name" = "${var.env_prefix}-igw"
+  }
+}
+
+# resource "aws_route_table" "myapp-route-table" {
+#   vpc_id = aws_vpc.myApp-vpc.id
+
+#   route {
+#     cidr_block = "0.0.0.0/0"
+#     gateway_id = aws_internet_gateway.myapp-ig.id
+#   }
 #   tags = {
-#     "Name" = "subnet-1-dev"
+#     "Name" = "${var.env_prefix}-rtb"
 #   }
 # }
-#create variable 
-variable "cidr_blocks" {
-  description = "subnet cidr block"
-  #can define default value for variable 
-  #   default = "10.0.10.0/24"
-  #set different type to varibale 
-#   type = list(string) # need to have some values with some kind of data
-  type = list(object) # need to have some values with some kind of data and need to validate value fo objects
-                    ({cidr_block =string
-                    name = string})
+
+#associate subnet to route table
+
+# resource "aws_route_table_association" "a-rtb-subnet" {
+#   subnet_id      = aws_subnet.myApp-subnet-1.id
+#   route_table_id = aws_route_table.myapp-route-table.id
+# }
+
+#define default route table instead of creating one
+resource "aws_default_route_table" "main-rtb" {
+  default_route_table_id = aws_vpc.myApp-vpc.default_route_table_id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.myapp-ig.id
+  }
+  tags = {
+    "Name" = "${var.env_prefix}-rtb"
+  }
 
 }
-#assign values to variable 
-#1- terraform apply and get prompt to enter value for variable (good for testing)
-#2- using command line arguments --> terraform apply -var "name of varible"=value
-#3 define variblae file terraform.tfvars and define ey vakues pairs for varibales
-resource "aws_subnet" "dev-subnet-1" {
-  #must assign to vpc 
-  vpc_id            = aws_vpc.development-vpc.id #refered to resource created before
-  cidr_block        = var.cidr_blocks[1]
-  availability_zone = "eu-central-1a"
+
+# resource "aws_security_group" "myapp-sg" {
+#   name   = "myapp-sg"
+#   vpc_id = aws_vpc.myApp-vpc.id
+
+#   #two type of rules incoming and outcoming traffic 
+#   #attribute
+#   ingress {
+#     from_port   = 22
+#     to_port     = 22
+#     protocol    = "tcp"
+#     cidr_blocks = [var.my_ip]
+#   }
+#   ingress {
+#     from_port   = 8080
+#     to_port     = 8080
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   egress {
+#     from_port       = 0 #any port
+#     to_port         = 0
+#     protocol        = "-1" # any protocol
+#     cidr_blocks     = ["0.0.0.0/0"]
+#     prefix_list_ids = []
+#   }
+#   tags = {
+#     "Name" = "${var.env_prefix}-sg"
+#   }
+# }
+
+#want to use existing security group 
+
+resource "aws_default_security_group" "default-sg" {
+  vpc_id = aws_vpc.myApp-vpc.id
+
+  #two type of rules incoming and outcoming traffic 
+  #attribute
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip]
+  }
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port       = 0 #any port
+    to_port         = 0
+    protocol        = "-1" # any protocol
+    cidr_blocks     = ["0.0.0.0/0"]
+    prefix_list_ids = []
+  }
   tags = {
-    "Name" = "subnet-1-dev"
+    "Name" = "${var.env_prefix}-default-sg"
   }
 }
-#by terraform apply to apply configuration
-#for query the existing resources and compoents from aws
-data "aws_vpc" "existing_vpc" {
-  default = true
-}
 
-resource "aws_subnet" "dev-subnet-2" {
-  #must assign to vpc 
-  vpc_id            = data.aws_vpc.existing_vpc.id #get id attribute from the object result
-  cidr_block        = "172.31.48.0/20"
-  availability_zone = "eu-central-1a"
-  tags = {
-    "Name" = "subnet-1-default"
+data "aws_ami" "latest-amazon-linux-image" {
+  most_recent = true #attirbute most recet set to true
+  owners      = ["amazon"]
+  filter { # define criteria for this queries
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
 }
-#two ways to remove resource : 1 - from terraform file / 2 - use terraform command (terraform destroy) and passthe resource name by -target
-#terraform destroy -target aws_subnet.dev-subnet-1 #do not use it there is no changes happen on the config file
-#apply changes on config file and use terraform apply command
 
-#chack difference between current staate and desired sitate
-# by terraform plan command or use terraform apply without confirmation 
-#terraform apply  -auto-approve to do apply without confirmation 
+#output tp see result 
 
-#completely destroy infrusturcture
-#terraform destroy
-#terraform state list
-#terraform state shpw name_resource
-
-#tell terrrafrom to give us output after applying configuration from one of the resources
-#terraform plan shows the attributes for that resources
-output "dev-vpc-id" {
-  #which attribute we want as output
-  value = aws_vpc.development-vpc.id
+output "aws_ami_id" {
+  value = data.aws_ami.latest-amazon-linux-image.id
 }
-output "dev-subnet-id" {
-  #which attribute we want as output
-  value = aws_subnet.dev-subnet-1.id
+
+
+resource "aws_key_pair" "ssh-key" {
+  key_name = "server-key"
+  # public_key = var.public_key
+  #orv
+  public_key = file(var.public_key_location) # read from file
+}
+
+resource "aws_instance" "myapp-server" {
+  #id of image
+  ami           = data.aws_ami.latest-amazon-linux-image.id
+  instance_type = var.instance_type
+  #optional arguments [not defining it's getting them by default]
+  subnet_id              = aws_subnet.myApp-subnet-1.id
+  vpc_security_group_ids = [aws_default_security_group.default-sg.id]
+  availability_zone      = var.avail_zone
+
+  associate_public_ip_address = true # need public ip address
+  #need also key pairs which allow us to ssh to servers
+  key_name = aws_key_pair.ssh-key.key_name
+
+  tags = {
+    "Name" = "${var.env_prefix}-server"
+  }
+}
+output "ec2_public_ip" {
+  value = aws_instance.myapp-server.public_ip
 }
