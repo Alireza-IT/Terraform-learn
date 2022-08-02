@@ -9,6 +9,7 @@ variable "env_prefix" {}
 variable "my_ip" {}
 variable "instance_type" {}
 variable "public_key" {}
+variable "private_key_location" {}
 variable "public_key_location" {
 
 }
@@ -180,7 +181,33 @@ resource "aws_instance" "myapp-server" {
   #               sudo usermod -aG docker ec2-user
   #               docker run -p 8080:80 nginx 
   #             EOF
-  user_data = file("entry-script.sh")
+  # user_data = file("entry-script.sh") #here we just pass the data
+
+  #alternative way by provisioners: which allows us to connect to remote server and execute cmd on that server
+  # we must tell how to connect to the server
+
+  connection {
+    type        = "ssh"          #other one is vrm
+    host        = self.public_ip #refer to current context
+    user        = "ec2-user"
+    private_key = file(var.private_key_location)
+  }
+  #
+  provisioner "file" {
+    source      = "entry-script.sh"
+    destination = "/home/ec2-user/entry-script-on-ec2.sh"
+  }
+  provisioner "remote-exec" {
+    inline = ["export ENV=dev", "mkdir newdir"] #list of commands
+    # script #Paths
+    #script = file("entry-script.sh") must be on server already so use another provisioners called file"
+  }
+  #another provisioner is local exec
+  # provisioner "local-exec" {
+  #   #execute locally after resource is created
+  #   # command = "echo ${self.puplic_ip} > output.txt"
+  # }
+
   tags = {
     "Name" = "${var.env_prefix}-server"
   }
