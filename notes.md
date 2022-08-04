@@ -10,3 +10,16 @@ or use local_file providers
 run script from CI/CD tool instead of terraform 
 
 if provisioner is failed ,terraform taint the resource to be failed and you have to recreate the resource again
+
+
+with modules = container for multiple resources used together
+logical grouping and we can use them many times
+we can paramerterise the configuration 
+module is like writing the function , we have input and output 
+use module when we want to froup resources to one single logical group 
+like vpc need subnet and ingw and etc.
+there are already module created by someone else 
+
+in terraform registry --> modules and search the list of that
+dependency is about if it's included the list of other moule or not and install them by terrafrom init
+  
