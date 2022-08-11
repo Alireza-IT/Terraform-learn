@@ -11,3 +11,9 @@
 *.tfvars
 providers.*
 practise.*
+
+#ignore crash file 
+.DS_Store
+
+#ignore crash log
+crash.log
