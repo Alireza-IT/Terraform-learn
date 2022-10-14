@@ -23,6 +23,7 @@ there are already module created by someone else
 in terraform registry --> modules and search the list of that
 dependency is about if it's included the list of other moule or not and install them by terrafrom init
 
+
 create module in project.many resources in main.tf
 end up with this infrs:
 main.tf
@@ -40,6 +41,8 @@ use output.tf in module as return value
 
 whenever we are doing module or changes in module we have to do the terraform init
 
+
 store state in somewhere anyone can access to it
 by use terraform in main.tf which is included metadata
 do not forget to do the terraform init after that all data in local tfstate is stored in the remote side
+
