@@ -41,3 +41,8 @@ use output.tf in module as return value
 
 whenever we are doing module or changes in module we have to do the terraform init
 
+
+store state in somewhere anyone can access to it
+by use terraform in main.tf which is included metadata
+do not forget to do the terraform init after that all data in local tfstate is stored in the remote side
+
