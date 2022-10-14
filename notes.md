@@ -22,4 +22,22 @@ there are already module created by someone else
 
 in terraform registry --> modules and search the list of that
 dependency is about if it's included the list of other moule or not and install them by terrafrom init
-  
+
+
+create module in project.many resources in main.tf
+end up with this infrs:
+main.tf
+variables.tf
+providers.tf
+output.tf
+no need to link the files together.we have cross reference here
+each modules has it's own variables and main and output.tf files
+
+naming is standard!
+
+creating module should group multiple resources 
+
+use output.tf in module as return value 
+
+whenever we are doing module or changes in module we have to do the terraform init
+
