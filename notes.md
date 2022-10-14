@@ -23,6 +23,7 @@ there are already module created by someone else
 in terraform registry --> modules and search the list of that
 dependency is about if it's included the list of other moule or not and install them by terrafrom init
 
+
 create module in project.many resources in main.tf
 end up with this infrs:
 main.tf
@@ -39,3 +40,4 @@ creating module should group multiple resources
 use output.tf in module as return value 
 
 whenever we are doing module or changes in module we have to do the terraform init
+
