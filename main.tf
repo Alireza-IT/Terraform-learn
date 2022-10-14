@@ -1,3 +1,13 @@
+terraform {
+  required_version = ">= 0.12"
+  backend "s3" {
+    bucket = "myapp-bucket"         # store states in AWS S3 bucket & define bucket name 
+    key    = "myapp/state.tfsatate" # path to save the state
+    region = "eu-west-3"
+  }
+}
+
+
 provider "aws" {
   region = "eu-west-3"
 }
